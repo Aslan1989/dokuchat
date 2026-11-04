@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace DokuChat\tests;
+namespace DokuChat\Tests;
 
 use DokuChat\Greeter;
 use PHPUnit\Framework\TestCase;
@@ -16,7 +16,7 @@ final class GreeterTest extends TestCase
 
 		$this->assertSame('Hello, Aslan', $result);
 	}
-	public function testGreetsRemoveSpace() : void
+	public function testRemovesSpacesAroundTheName() : void
 	{
 		$greeter = new Greeter();
 
@@ -25,7 +25,7 @@ final class GreeterTest extends TestCase
 		$this->assertSame('Hello, Aslan', $result);
 
 	}
-	public function testGreetsEmpty() : void
+	public function testGreetsStrangerWhenNameIsEmpty() : void
 	{
 		$greeter = new Greeter();
 
@@ -34,7 +34,7 @@ final class GreeterTest extends TestCase
 		$this->assertSame('Hello, stranger', $result);
 
 	}
-	public function testGreetsEmptySpaces() : void
+	public function testGreetsStrangerWhenNameIsOnlySpaces() : void
 	{
 		$greeter = new Greeter();
 
@@ -43,7 +43,7 @@ final class GreeterTest extends TestCase
 		$this->assertSame('Hello, stranger', $result);
 
 	}
-	public function testGreetsZeroValue() : void
+	public function testKeepsZeroAsAName() : void
 	{
 		$greeter = new Greeter();
 
