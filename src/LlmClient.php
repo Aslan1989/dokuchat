@@ -9,6 +9,56 @@ use JsonException;
 
 final class LlmClient
 {
+	public function __construct(
+		private readonly string $baseUrl,
+		private readonly string $model,
+		private readonly string $apiKey,
+		private readonly int $timeoutSeconds = 50,
+	) {
+
+	}
+	public static function fromConfig(Config $config): self
+	{
+		return new self(
+			rtrim($config->get('LLM_BASE_URL'), '/'),
+			$config->get('LLM_MODEL'),
+			$config->get('LLM_API_KEY'),
+			$config->getInt('LLM_TIMEOUT', 50),
+		);
+	}
+	/**
+	 * @param list<array{role: string, content: string}> $messages
+	 */
+	public function chat(array $messages): string
+	{
+		$payload = json_encode([
+			'model' => $this->model,
+			'messages' => $messages,
+			'temperature' => 0,
+		], JSON_THROW_ON_ERROR);
+
+		$ch = curl_init($this->baseUrl . '/chat/completions');
+		curl_setopt_array($ch, [
+			CURLOPT_POST => true,
+			CURLOPT_POSTFIELDS => $payload,
+			CURLOPT_RETURNTRANSFER => true,
+			CURLOPT_HTTPHEADER => [
+				'Content-type: application/json',
+				'Authorization: Bearer ' . $this->apiKey,
+			],
+			CURLOPT_CONNECTTIMEOUT => 5,
+			CURLOPT_TIMEOUT => $this->timeoutSeconds,
+		]);
+		$body = curl_exec($ch);
+		if($body === false) {
+			throw new RuntimeException('LLM request failed: ' . curl_error($ch));
+		}
+		$status = curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
+		if ($status !== 200) {
+			throw new RuntimeException("LLM returned HTTP $status: " . substr($body, 0, 200));
+		}
+		return self::extractContent($body);
+	}
 	/**
 	 * Takes the raw JSON body of a /chat/completions response
 	 * and returns the text of the answer.

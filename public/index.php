@@ -5,6 +5,7 @@ declare(strict_types=1);
 use DokuChat\Greeter;
 use DokuChat\Config;
 use DokuChat\Database;
+use DokuChat\LlmClient;
 
 
 
@@ -18,9 +19,41 @@ match ("$method $path") {
 	'GET /' => homePage(),
 	'GET /hello' => helloPage(),
 	'GET /health' => healthCheck($config),
+	'GET /ask' => askPage($config),
 	default => notFound(),
 };
 
+function askPage(Config $config): void
+{
+	$question = $_GET['q'] ?? '';
+	if (!is_string($question) || trim($question) === '') {
+		http_response_code(400);
+		echo 'Parameter q is required';
+		return;
+	}
+	$question = trim($question);
+	if ($question === '') {
+		http_response_code(404);
+		echo 'Parameter q is required';
+		return;
+	}
+	if (mb_strlen($question, 'UTF-8') > 500) {
+		http_response_code(404);
+		echo 'Question is too long';
+		return;
+	}
+	try {
+		$answer = LlmClient::fromConfig($config)->chat([
+			['role' => 'system', 'content' => 'Answer briefly, in at most three sentences.'],
+			['role' => 'user', 'content' => $question],
+		]);
+		echo htmlspecialchars($answer);
+	} catch (RuntimeException $e) {
+		error_log('LLM request failed: ' . $e->getMessage());
+		http_response_code(502);
+		echo 'The language model is not available right now';
+	}
+}
 function databaseIsUp(Config $config): bool
 {
 	try {
