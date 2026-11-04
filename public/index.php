@@ -29,10 +29,6 @@ function helloPage(): void
 	if (!is_string($name)) {
 		$name = 'stranger';
 	}
-	$safeName = htmlspecialchars(
-		$name,
-		ENT_QUOTES | ENT_SUBSTITUTE,
-		'UTF-8'
-	);
+	$safeName = htmlspecialchars($name,);
 	echo "Hello, $safeName";
 }

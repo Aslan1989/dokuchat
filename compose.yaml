@@ -9,6 +9,6 @@ services:
     depends_on:
       - php
   php:
-    image: php:8.5-fpm
+    build: ./docker/php
     volumes:
       - ./:/var/www/html  
