@@ -1,6 +1,10 @@
 <?php
 declare(strict_types=1);
 
+use DokuChat\Greeter;
+
+require __DIR__ . '/../vendor/autoload.php';
+
 $method = $_SERVER['REQUEST_METHOD'];
 $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 
@@ -23,12 +27,12 @@ function notFound(): void
 
 function helloPage(): void
 {
-	$name = $_GET['name'] ?? 'stranger';
+	$name = $_GET['name'] ?? '';
 
-	// defence drom param like ?name[]=Aslan
+	// defence from param like ?name[]=Aslan
 	if (!is_string($name)) {
-		$name = 'stranger';
+		$name = '';
 	}
-	$safeName = htmlspecialchars($name,);
-	echo "Hello, $safeName";
+	$text = (new Greeter())->greet($name);
+	echo htmlspecialchars($text);
 }

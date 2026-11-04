@@ -1,12 +1,16 @@
 <?php
 declare(strict_types=1);
 
-namespace Dokuchat;
+namespace DokuChat;
 
-class Greeter
+final class Greeter
 {
-	public function greet(string $name): stream_set_blocking
+	public function greet(string $name): string
 	{
+		$name = trim($name);
+		if($name === '') {
+			return "Hello, stranger";
+		}
 		return "Hello, $name";
 	}
 }
