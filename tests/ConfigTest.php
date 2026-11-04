@@ -2,9 +2,13 @@
 
 declare(strict_types=1);
 
+namespace DokuChat\Tests;
+
 use DokuChat\Config;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
+
+use RuntimeException;
 
 final class ConfigTest extends TestCase
 {

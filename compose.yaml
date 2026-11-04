@@ -31,6 +31,11 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+  ollama:
+    image: ollama/ollama
+    volumes:
+      - ollama-data:/root/.ollama    
 
 volumes:
-  db-data:      
+  db-data:
+  ollama-data:

@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace DokuChat;
 
-use LogicException;
 use RuntimeException;
 
 final class Config
