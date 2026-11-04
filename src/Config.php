@@ -29,4 +29,15 @@ final class Config
 		}
 		throw new RuntimeException("Missing configuration: $key");
 	}
+
+	public function getInt(string $key, ?int $default = null): int
+	{
+		$stringDefault = $default === null ? null : (string) $default;
+		$value = $this->get($key, $stringDefault);
+		$number = filter_var($value, FILTER_VALIDATE_INT);
+		if ($number === false) {
+			throw new RuntimeException("Invalid integer for configuration $key: '$value'");
+		}
+		return $number;
+	}
 }
