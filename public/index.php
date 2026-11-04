@@ -1,19 +1,55 @@
 <?php
+
 declare(strict_types=1);
 
 use DokuChat\Greeter;
+use DokuChat\Config;
+use DokuChat\Database;
+
+
 
 require __DIR__ . '/../vendor/autoload.php';
 
 $method = $_SERVER['REQUEST_METHOD'];
 $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+$config = Config::fromEnvironment();
 
 match ("$method $path") {
 	'GET /' => homePage(),
 	'GET /hello' => helloPage(),
+	'GET /health' => healthCheck($config),
 	default => notFound(),
 };
 
+function databaseIsUp(Config $config): bool
+{
+	try {
+		Database::connect($config)->query('SELECT 1');
+		return true;
+	} catch (PDOException $e) {
+		error_log('Database check failed: ' . $e->getMessage());
+		return false;
+	}
+}
+function healthCheck(Config $config): void
+{
+	header('Content-Type: application/json; charset=utf-8');
+	header('Cache-Control: no-store');
+	if (databaseIsUp($config)) {
+		http_response_code(200);
+		$response = [
+			'status' => 'ok',
+			'database' => 'ok',
+		];
+	} else {
+		http_response_code(503);
+		$response = [
+			'status' => 'error',
+			'database' => 'down',
+		];
+	}
+	echo json_encode($response, JSON_THROW_ON_ERROR);
+}
 function homePage(): void
 {
 	echo 'DockuChat home';
