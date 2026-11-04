@@ -10,5 +10,27 @@ services:
       - php
   php:
     build: ./docker/php
+    env_file: .env
+    depends_on:
+      db:
+        condition: service_healthy
     volumes:
-      - ./:/var/www/html  
+      - ./:/var/www/html
+  db:
+    image: mariadb:11.8
+    environment:
+      MARIADB_DATABASE: ${DB_NAME}
+      MARIADB_USER: ${DB_USER}
+      MARIADB_PASSWORD: ${DB_PASSWORD}
+      MARIADB_RANDOM_ROOT_PASSWORD: "yes"
+    volumes:
+      - db-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      start_period: 20s
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  db-data:      
