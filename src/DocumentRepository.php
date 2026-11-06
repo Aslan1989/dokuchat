@@ -95,4 +95,42 @@ final class DocumentRepository
 			throw new RuntimeException("Chunk $chunkId was not updated");
 		}
 	}
+	/**
+	 * @return list<array{
+	 *     id: int,
+	 *     filename: string,
+	 *     position: int,
+	 *     content: string,
+	 *     embedding: array
+	 * }>
+	 */
+	public function findEmbeddedChunks(): array
+	{
+		$statement = $this->pdo->query(
+			'SELECT c.id, d.filename, c.position, c.content, c.embedding
+         FROM chunks c
+         JOIN documents d ON d.id = c.document_id
+         WHERE c.embedding IS NOT NULL
+         ORDER BY c.id'
+		);
+
+		$rows = $statement->fetchAll();
+		$chunks = [];
+
+		foreach ($rows as $row) {
+			$row['id'] = (int) $row['id'];
+			$row['position'] = (int) $row['position'];
+
+			$row['embedding'] = json_decode(
+				$row['embedding'],
+				true,
+				512,
+				JSON_THROW_ON_ERROR
+			);
+
+			$chunks[] = $row;
+		}
+
+		return $chunks;
+	}
 }
