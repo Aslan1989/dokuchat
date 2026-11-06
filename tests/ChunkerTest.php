@@ -2,9 +2,12 @@
 
 declare(strict_types=1);
 
+namespace DokuChat\Tests;
+
 use DokuChat\Chunker;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
+use InvalidArgumentException;
 
 final class ChunkerTest extends TestCase
 {
@@ -100,5 +103,13 @@ final class ChunkerTest extends TestCase
 		$this->expectException(InvalidArgumentException::class);
 
 		new Chunker(size: $size, overlap: $overlap);
+	}
+	public function testDoesNotCreateAChunkThatIsOnlyOverlap(): void
+	{
+		$chunker = new Chunker(size: 10, overlap: 9);
+
+		$chunks = $chunker->chunk('abc defg hijklmno');
+
+		$this->assertSame(['abc defg', 'hijklmno'], $chunks);
 	}
 }

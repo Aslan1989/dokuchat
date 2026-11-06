@@ -35,7 +35,7 @@ final class Chunker
 		$wordCount = count($words);
 
 		while ($index < $wordCount) {
-			$chunksWords = [];
+			$chunksWords = []; // create empty array
 			while ($index < $wordCount) {
 				$candidateWords = $chunksWords;
 				$candidateWords[] = $words[$index];
