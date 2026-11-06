@@ -30,6 +30,42 @@ final class Chunker
 		if ($words === []) {
 			return [];
 		}
-		throw new LogicException('TODO: split words into chunks');
+		$chunks = [];
+		$index = 0;
+		$wordCount = count($words);
+
+		while ($index < $wordCount) {
+			$chunksWords = [];
+			while ($index < $wordCount) {
+				$candidateWords = $chunksWords;
+				$candidateWords[] = $words[$index];
+
+				$candidate = implode(' ', $candidateWords);
+
+				if ($chunksWords !== [] && mb_strlen($candidate, 'UTF-8') > $this->size) {
+					break;
+				}
+				$chunksWords[] = $words[$index];
+				$index++;
+			}
+			$chunks[] = implode(' ', $chunksWords);
+			if ($index < $wordCount) {
+				$nextStart = $index;
+				for ($i = count($chunksWords) - 1; $i > 0; $i--) {
+					$overlapWords = array_slice($chunksWords, $i);
+					$overlapText = implode(' ', $overlapWords);
+					if (mb_strlen($overlapText, 'UTF-8') > $this->overlap) {
+						break;
+					}
+					$candidate = $overlapText . ' ' . $words[$index];
+					if (mb_strlen($candidate, 'UTF-8') > $this->size) {
+						break;
+					}
+					$nextStart--;
+				}
+				$index = $nextStart;
+			}
+		}
+		return $chunks;
 	}
 }
