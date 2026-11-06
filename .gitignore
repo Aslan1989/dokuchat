@@ -2,3 +2,4 @@
 /vendor/
 text.txt
 .phpunit.result.cache.phpunit.result.cache
+.vscode
