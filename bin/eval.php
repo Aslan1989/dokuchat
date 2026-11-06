@@ -8,13 +8,68 @@ use DokuChat\RagService;
 require __DIR__ . '/../vendor/autoload.php';
 
 $cases = [
-	['Wie alt ist der Höhlenbär?', ['30.000', '30000']],
-	['Wie heißt der Höhlenbär?', ['Brummo']],
-	['Wie lange darf ich ein Buch ausleihen?', ['vier Wochen', '4 Wochen']],
-	['Was kostet der Eintritt für Kinder unter zwölf Jahren?', ['frei', 'kostenlos', '0 Euro']],
-	['Wann ist die Vorlesestunde für Kinder?', ['Mittwoch']],
-	['Wer ist der Bürgermeister von Lindenhain?', ['nicht in den Dokumenten']],
+	[
+		'q' => 'Wie alt ist der Höhlenbär?',
+		'any' => ['30.000', '30000'],
+	],
+	[
+		'q' => 'Wie heißt der Höhlenbär?',
+		'any' => ['Brummo'],
+	],
+	[
+		'q' => 'Wie lange darf ich ein Buch ausleihen?',
+		'any' => ['vier Wochen', '4 Wochen'],
+	],
+	[
+		'q' => 'Was kostet der Eintritt für Kinder unter zwölf Jahren?',
+		'any' => ['frei', 'kostenlos', '0 Euro'],
+	],
+	[
+		'q' => 'Wann ist die Vorlesestunde für Kinder?',
+		'any' => ['Mittwoch'],
+	],
+	[
+		'q' => 'Wer ist der Bürgermeister von Lindenhain?',
+		'any' => ['nicht in den Dokumenten'],
+	],
+	[
+		'q' => 'Was kostet der Eintritt ins Museum und was kostet ein Bibliotheksausweis?',
+		'all' => ['8 Euro', '12 Euro'],
+	],
+	[
+		'q' => 'Ist das Museum am Montag geöffnet?',
+		'any' => ['geschlossen', 'nicht geöffnet'],
+	],
+	[
+		'q' => 'Ist die Bibliothek am Montag geöffnet?',
+		'any' => ['9 bis 19', '9 Uhr', '9:00'],
+	],
 ];
+
+function passes(string $answer, array $case): bool
+{
+	if (isset($case['any'])) {
+		foreach ($case['any'] as $expected) {
+			if (mb_stripos($answer, $expected, 0, 'UTF-8') !== false) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	if (isset($case['all'])) {
+		foreach ($case['all'] as $expected) {
+			if (mb_stripos($answer, $expected, 0, 'UTF-8') === false) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	throw new InvalidArgumentException('Case must have any or all');
+}
 
 $start = microtime(true);
 
@@ -23,23 +78,16 @@ $service = RagService::fromConfig($config);
 
 $passed = 0;
 
-foreach ($cases as [$question, $expectedWords]) {
+foreach ($cases as $case) {
+	$question = $case['q'];
 	try {
 		$result = $service->answer($question);
 
 		$answer = $result['answer'];
 		$sources = $result['sources'];
 
-		$isPass = false;
-
-		foreach ($expectedWords as $expected) {
-			if (mb_stripos($answer, $expected, 0, 'UTF-8') !== false) {
-				$isPass = true;
-				break;
-			}
-		}
-
-		if ($isPass) {
+		$isPass = passes($answer, $case);
+		if($isPass) {
 			$passed++;
 		}
 
