@@ -47,9 +47,9 @@ final class DocumentRepository
 			$this->pdo->commit();
 			return $documentId;
 		} catch (Throwable $e) {
-			// if ($this->pdo->inTransaction()) {
-			// 	$this->pdo->rollBack();
-			// }
+			if ($this->pdo->inTransaction()) {
+				$this->pdo->rollBack();
+			}
 			throw $e;
 		}
 	}
