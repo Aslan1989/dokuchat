@@ -2,10 +2,16 @@
 
 declare(strict_types=1);
 
+namespace DokuChat;
 use DokuChat\Greeter;
 use DokuChat\Config;
 use DokuChat\Database;
 use DokuChat\LlmClient;
+use DokuChat\PromptBuilder;
+use DokuChat\DocumentRepository;
+use DokuChat\Retriever;
+use PDOException;
+use RuntimeException;
 
 
 
@@ -26,32 +32,70 @@ match ("$method $path") {
 function askPage(Config $config): void
 {
 	$question = $_GET['q'] ?? '';
+
 	if (!is_string($question) || trim($question) === '') {
 		http_response_code(400);
 		echo 'Parameter q is required';
 		return;
 	}
+
 	$question = trim($question);
-	if ($question === '') {
-		http_response_code(404);
-		echo 'Parameter q is required';
-		return;
-	}
+
 	if (mb_strlen($question, 'UTF-8') > 500) {
-		http_response_code(404);
+		http_response_code(400);
 		echo 'Question is too long';
 		return;
 	}
+
 	try {
-		$answer = LlmClient::fromConfig($config)->chat([
-			['role' => 'system', 'content' => 'Answer briefly, in at most three sentences.'],
-			['role' => 'user', 'content' => $question],
-		]);
-		echo htmlspecialchars($answer);
+		$service = RagService::fromConfig($config);
+		$result = $service->answer($question);
+
+		$answer = $result['answer'];
+		$sources = $result['sources'];
+
+		if ($sources === []) {
+			echo htmlspecialchars(
+				$answer,
+				ENT_QUOTES | ENT_SUBSTITUTE,
+				'UTF-8'
+			);
+			return;
+		}
+
+		echo '<p>'
+			. htmlspecialchars($answer, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8')
+			. '</p>';
+
+		echo '<h2>Quellen</h2>';
+		echo '<ol>';
+
+		foreach ($sources as $chunk) {
+			$filename = htmlspecialchars(
+				$chunk['filename'],
+				ENT_QUOTES | ENT_SUBSTITUTE,
+				'UTF-8'
+			);
+
+			$section = (int) $chunk['position'] + 1;
+			$score = number_format($chunk['score'], 3, '.', '');
+
+			echo '<li>'
+				. $filename
+				. ', Abschnitt ' . $section
+				. ' (Score ' . $score . ')'
+				. '</li>';
+		}
+
+		echo '</ol>';
+	} catch (PDOException $e) {
+		error_log('Database error in /ask: ' . $e->getMessage());
+		http_response_code(503);
+		echo 'Die Datenbank ist gerade nicht erreichbar.';
 	} catch (RuntimeException $e) {
-		error_log('LLM request failed: ' . $e->getMessage());
+		error_log('Error in /ask: ' . $e->getMessage());
 		http_response_code(502);
-		echo 'The language model is not available right now';
+		echo 'Das Sprachmodell ist gerade nicht erreichbar.';
 	}
 }
 function databaseIsUp(Config $config): bool

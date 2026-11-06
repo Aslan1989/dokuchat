@@ -78,7 +78,7 @@ final class DocumentRepository
 
 		$json = json_encode(
 			$embedding,
-			JSON_THROW_ON_ERROR | JSON_PRESERVE_ZERO_FRACTION
+			JSON_THROW_ON_ERROR | JSON_PRESERVE_ZERO_FRACTION // Ohne diesen Flag wird 1.0 als 1 gespeichert. Beim Lesen bekomme ich dann einen int statt float.
 		);
 
 		$statement = $this->pdo->prepare(
