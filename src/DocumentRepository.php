@@ -6,6 +6,7 @@ namespace DokuChat;
 
 use PDO;
 use Throwable;
+use RuntimeException;
 
 final class DocumentRepository
 {
@@ -36,7 +37,7 @@ final class DocumentRepository
 				'INSERT INTO chunks (document_id, position, content)
 				 VALUES (:document_id, :position, :content)'
 			);
-			
+
 			foreach ($chunks as $position => $content) {
 				$chunkStatement->execute([
 					'document_id' => $documentId,
@@ -51,6 +52,47 @@ final class DocumentRepository
 				$this->pdo->rollBack();
 			}
 			throw $e;
+		}
+	}
+	/**
+	 * @return list<array{id: int, content: string}>
+	 */
+	public function findChunksWithoutEmbedding(int $limit = 20): array
+	{
+		$statement = $this->pdo->prepare(
+			'SELECT id, content
+			 FROM chunks
+			 WHERE embedding IS NULL
+			 ORDER BY id
+			 LIMIT :limit'
+		);
+		$statement->bindValue(':limit', $limit, PDO::PARAM_INT);
+		$statement->execute();
+		return $statement->fetchAll();
+	}
+	/**
+	 * @param list<float> $embedding
+	 */
+	public function saveEmbedding(int $chunkId, array $embedding): void
+	{
+
+		$json = json_encode(
+			$embedding,
+			JSON_THROW_ON_ERROR | JSON_PRESERVE_ZERO_FRACTION
+		);
+
+		$statement = $this->pdo->prepare(
+			'UPDATE chunks
+			 SET embedding = :embedding
+			 WHERE id = :id'
+		);
+
+		$statement->execute([
+			'embedding' => $json,
+			'id' => $chunkId,
+		]);
+		if ($statement->rowCount() !== 1) {
+			throw new RuntimeException("Chunk $chunkId was not updated");
 		}
 	}
 }

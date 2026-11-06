@@ -30,6 +30,9 @@ $statements = [
 		UNIQUE KEY uq_chunks_document_position (document_id, position)
 		) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 		SQL,
+		'chunks.embedding' => <<<'SQL'
+			ALTER TABLE chunks ADD COLUMN IF NOT EXISTS embedding JSON NULL
+			SQL,
 ];
 foreach ($statements as $table => $sql) {
 	$pdo->exec($sql);

@@ -72,4 +72,59 @@ final class DocumentRepositoryTest extends TestCase
 			['position' => 2, 'content' => 'third'],
 		], $rows);
 	}
+	public function testSavedEmbeddingIsNoLongerReturnedAsMissing(): void
+	{
+		// 1. Создаём документ с одним чанком.
+		$documentId = $this->repository->save(
+			'phpunit-embed.txt',
+			['hello']
+		);
+
+		// 2. Находим ID созданного чанка.
+		$statement = $this->pdo->prepare(
+			'SELECT id
+         FROM chunks
+         WHERE document_id = :id'
+		);
+
+		$statement->execute(['id' => $documentId]);
+
+		$chunkId = (int) $statement->fetchColumn();
+
+		// 3. До сохранения embedding чанк есть в списке.
+		$rows = $this->repository->findChunksWithoutEmbedding(100);
+		$ids = array_map('intval', array_column($rows, 'id'));
+
+		$this->assertContains($chunkId, $ids);
+
+		// 4. Сохраняем вектор.
+		$this->repository->saveEmbedding(
+			$chunkId,
+			[0.5, -0.25, 1.0]
+		);
+
+		// 5. Теперь этого чанка нет в списке без embedding.
+		$rows = $this->repository->findChunksWithoutEmbedding(100);
+		$ids = array_map('intval', array_column($rows, 'id'));
+
+		$this->assertNotContains($chunkId, $ids);
+
+		// 6. Читаем сохранённый JSON и проверяем вектор.
+		$statement = $this->pdo->prepare(
+			'SELECT embedding FROM chunks WHERE id = :id'
+		);
+
+		$statement->execute(['id' => $chunkId]);
+
+		$json = $statement->fetchColumn();
+
+		$embedding = json_decode(
+			$json,
+			true,
+			512,
+			JSON_THROW_ON_ERROR
+		);
+
+		$this->assertSame([0.5, -0.25, 1.0], $embedding);
+	}
 }
