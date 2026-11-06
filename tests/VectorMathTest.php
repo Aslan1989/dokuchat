@@ -10,7 +10,7 @@ use InvalidArgumentException;
 
 final class VectorMathTest extends TestCase
 {
-	public function testCosineSimularity(): void
+	public function testCosineSimilarity(): void
 	{
 		$result = VectorMath::cosineSimilarity(
 			[3, 4],
@@ -49,7 +49,7 @@ final class VectorMathTest extends TestCase
 		$this->assertEqualsWithDelta(1, $result, 0.0001);
 	}
 
-	public function testPerpendecularValues(): void
+	public function testPerpendicularValues(): void
 	{
 		$result = VectorMath::cosineSimilarity(
 			[1, 0],

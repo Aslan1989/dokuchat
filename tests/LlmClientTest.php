@@ -46,4 +46,54 @@ final class LlmClientTest extends TestCase
 
 		LlmClient::extractContent($json);
 	}
+
+	public function testExtractsEmbedding(): void
+	{
+		$json = <<<'JSON'
+	{
+		"data": [
+			{
+				"embedding": [0.5, -0.25, 1]
+			}
+		]
+	}
+	JSON;
+
+		$result = LlmClient::extractEmbedding($json);
+
+		$this->assertSame([0.5, -0.25, 1.0], $result);
+	}
+
+	public function testEmbeddingRejectsInvalidJson(): void
+	{
+		$json = '<html>502</html>';
+
+		$this->expectException(RuntimeException::class);
+
+		LlmClient::extractEmbedding($json);
+	}
+	public function testNoFieldEmbedding(): void
+	{
+		$json = '{"data":[{}]}';
+
+		$this->expectException(RuntimeException::class);
+
+		LlmClient::extractEmbedding($json);
+	}
+	public function testEmbeddingRejectsEmptyVector(): void
+	{
+		$json = '{"data":[{"embedding":[]}]}';
+
+		$this->expectException(RuntimeException::class);
+
+		LlmClient::extractEmbedding($json);
+	}
+	public function testNoNumberInside(): void
+	{
+		$json = '{"data":[{"embedding":[0.5,"x"]}]}';
+
+		$this->expectException(RuntimeException::class);
+
+		LlmClient::extractEmbedding($json);
+	}
 }
