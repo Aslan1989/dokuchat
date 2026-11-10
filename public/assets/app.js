@@ -8,6 +8,8 @@ const sendButton = document.getElementById('send');
 const chat = document.getElementById('chat');
 const welcome = document.getElementById('welcome');
 const statusBadge = document.getElementById('status');
+const newChatButton = document.getElementById('new-chat');
+const homeLink = document.getElementById('home-link');
 
 let busy = false;
 
@@ -30,6 +32,23 @@ input.addEventListener('input', () => {
 	input.style.height = input.scrollHeight + 'px';
 });
 
+// Zurück zur Startseite: Verlauf löschen, Beispiele wieder zeigen
+function newChat() {
+	chat.querySelectorAll('.msg').forEach((message) => message.remove());
+	welcome.hidden = false;
+	newChatButton.hidden = true;
+	input.value = '';
+	input.style.height = 'auto';
+	input.focus();
+}
+
+newChatButton.addEventListener('click', newChat);
+
+homeLink.addEventListener('click', (event) => {
+	event.preventDefault();
+	newChat();
+});
+
 document.querySelectorAll('.example').forEach((button) => {
 	button.addEventListener('click', () => ask(button.textContent));
 });
@@ -43,6 +62,7 @@ async function ask(rawQuestion) {
 	busy = true;
 	sendButton.disabled = true;
 	welcome.hidden = true;
+	newChatButton.hidden = false;
 	input.value = '';
 	input.style.height = 'auto';
 
