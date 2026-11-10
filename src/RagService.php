@@ -19,7 +19,7 @@ final class RagService
 		$pdo = Database::connect($config);
 		$repository = new DocumentRepository($pdo);
 
-		$topK = $config->getInt('RAG_TOP_K', 3);
+		$topK = $config->getInt('RAG_TOP_K', 2);
 
 		return new self($client, $repository, $topK);
 	}

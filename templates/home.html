@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>DokuChat – Fragen an deine Dokumente</title>
+	<link rel="stylesheet" href="/assets/app.css">
+	<script src="/assets/app.js" defer></script>
+</head>
+<body>
+	<header class="top">
+		<div class="brand">
+			<span class="logo" aria-hidden="true">D</span>
+			<div>
+				<h1>DokuChat</h1>
+				<p>Antworten nur aus deinen Dokumenten – mit Quellen</p>
+			</div>
+		</div>
+		<span class="status" id="status" title="Verbindung zur Datenbank">Prüfe …</span>
+	</header>
+
+	<main id="chat" class="chat" aria-live="polite">
+		<section class="welcome" id="welcome">
+			<h2>Was möchtest du wissen?</h2>
+			<p>DokuChat sucht die passenden Stellen in den Dokumenten und lässt ein Sprachmodell daraus antworten.</p>
+			<div class="examples">
+				<button type="button" class="example">Wie alt ist der Höhlenbär?</button>
+				<button type="button" class="example">Was kostet der Eintritt ins Museum?</button>
+				<button type="button" class="example">Wie lange darf ich ein Buch ausleihen?</button>
+				<button type="button" class="example">Wann ist die Vorlesestunde für Kinder?</button>
+			</div>
+		</section>
+	</main>
+
+	<form class="composer" id="form">
+		<label for="question" class="visually-hidden">Deine Frage</label>
+		<textarea id="question" name="q" rows="1" maxlength="500"
+			placeholder="Stell eine Frage zu den Dokumenten …" required></textarea>
+		<button type="submit" id="send" aria-label="Frage senden">
+			<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+				<path d="M4 12l16-8-6 16-2.5-6.5L4 12z" fill="currentColor"/>
+			</svg>
+		</button>
+	</form>
+	<p class="hint">Enter zum Senden · Shift + Enter für eine neue Zeile</p>
+
+	<template id="tpl-question">
+		<div class="msg msg-user"><div class="bubble"></div></div>
+	</template>
+
+	<template id="tpl-answer">
+		<div class="msg msg-bot">
+			<div class="avatar" aria-hidden="true">D</div>
+			<div class="body">
+				<div class="bubble"></div>
+				<div class="sources"></div>
+				<div class="meta"></div>
+			</div>
+		</div>
+	</template>
+</body>
+</html>

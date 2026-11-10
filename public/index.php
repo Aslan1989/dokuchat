@@ -26,6 +26,7 @@ match ("$method $path") {
 	'GET /hello' => helloPage(),
 	'GET /health' => healthCheck($config),
 	'GET /ask' => askPage($config),
+	'GET /api/ask' => askJson($config),
 	default => notFound(),
 };
 
@@ -129,7 +130,66 @@ function healthCheck(Config $config): void
 }
 function homePage(): void
 {
-	echo 'DockuChat home';
+	header('Content-Type: text/html; charset=utf-8');
+	readfile(__DIR__ . '/../templates/home.html');
+}
+
+function jsonResponse(int $status, array $data): void
+{
+	http_response_code($status);
+	header('Content-Type: application/json; charset=utf-8');
+	header('Cache-Control: no-store');
+	echo json_encode($data, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE);
+}
+
+function askJson(Config $config): void
+{
+	$question = $_GET['q'] ?? '';
+
+	if (!is_string($question) || trim($question) === '') {
+		jsonResponse(400, ['error' => 'Bitte gib eine Frage ein.']);
+		return;
+	}
+
+	$question = trim($question);
+
+	if (mb_strlen($question, 'UTF-8') > 500) {
+		jsonResponse(400, ['error' => 'Die Frage ist zu lang (maximal 500 Zeichen).']);
+		return;
+	}
+
+	try {
+		$result = RagService::fromConfig($config)->answer($question);
+	} catch (PDOException $e) {
+		error_log('Database error in /api/ask: ' . $e->getMessage());
+		jsonResponse(503, ['error' => 'Die Datenbank ist gerade nicht erreichbar.']);
+		return;
+	} catch (RuntimeException $e) {
+		error_log('Error in /api/ask: ' . $e->getMessage());
+		jsonResponse(502, ['error' => 'Das Sprachmodell ist gerade nicht erreichbar.']);
+		return;
+	}
+
+	$sources = array_map(
+		fn(array $chunk): array => [
+			'filename' => $chunk['filename'],
+			'section' => (int) $chunk['position'] + 1,
+			'score' => round($chunk['score'], 3),
+			'excerpt' => excerpt($chunk['content'], 400),
+		],
+		$result['sources']
+	);
+
+	jsonResponse(200, ['answer' => $result['answer'], 'sources' => $sources]);
+}
+
+function excerpt(string $text, int $length): string
+{
+	if (mb_strlen($text, 'UTF-8') <= $length) {
+		return $text;
+	}
+
+	return rtrim(mb_substr($text, 0, $length, 'UTF-8')) . ' …';
 }
 
 function notFound(): void

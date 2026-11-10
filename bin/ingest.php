@@ -50,6 +50,12 @@ $repository = new DocumentRepository($pdo);
 
 $filename = basename($path);
 
+$existingId = $repository->findIdByFilename($filename);
+
+if ($existingId !== null) {
+	fail('"' . $filename . '" is already saved as document ' . $existingId . '. Delete it first.');
+}
+
 $documentId = $repository->save($filename, $chunks);
 
 echo 'Saved document '

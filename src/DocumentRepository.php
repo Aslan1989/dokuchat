@@ -54,6 +54,18 @@ final class DocumentRepository
 			throw $e;
 		}
 	}
+
+	public function findIdByFilename(string $filename): ?int
+	{
+		$statement = $this->pdo->prepare(
+			'SELECT id FROM documents WHERE filename = :filename LIMIT 1'
+		);
+		$statement->execute(['filename' => $filename]);
+
+		$id = $statement->fetchColumn();
+
+		return $id === false ? null : (int) $id;
+	}
 	/**
 	 * @return list<array{id: int, content: string}>
 	 */
