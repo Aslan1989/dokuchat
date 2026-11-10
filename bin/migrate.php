@@ -7,6 +7,20 @@ use DokuChat\Database;
 
 require __DIR__ . '/../vendor/autoload.php';
 
+/**
+ * Creates the database tables. "Idempotent": safe to run many times,
+ * because every statement uses IF NOT EXISTS. Existing data stays.
+ *
+ * Schema decisions:
+ *  - InnoDB: supports transactions and foreign keys.
+ *  - utf8mb4: full UTF-8 (umlauts, emoji).
+ *  - FOREIGN KEY ... ON DELETE CASCADE: deleting a document deletes its
+ *    chunks automatically, so no "orphan" chunks stay behind.
+ *  - UNIQUE (document_id, position): a document cannot have two chunks at
+ *    the same position.
+ *  - embedding JSON NULL: NULL means "not embedded yet". It was added
+ *    later with ALTER TABLE, which is why it is a separate step.
+ */
 $config = Config::fromEnvironment();
 $pdo = Database::connect($config);
 $statements = [

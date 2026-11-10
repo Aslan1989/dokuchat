@@ -7,6 +7,25 @@ use DokuChat\RagService;
 
 require __DIR__ . '/../vendor/autoload.php';
 
+/**
+ * End-to-end evaluation: asks fixed questions with known answers through the
+ * whole RAG pipeline and counts how many answers are correct.
+ *
+ * Why? When we change something (chunking, k, model, prompt), we need a
+ * number that shows whether it got better or worse, not just a feeling.
+ *
+ * Each case has a question 'q' and EITHER:
+ *   'any' => the answer must contain at least ONE of these texts
+ *            (the model may write "30.000" or "30000")
+ *   'all' => the answer must contain EVERY text
+ *            (a question that needs two documents)
+ *
+ * Special cases:
+ *  - "Bürgermeister": the answer is in NO document. It tests that the model
+ *    says "nicht in den Dokumenten" instead of inventing something.
+ *  - Museum + Bibliotheksausweis: needs chunks from TWO documents, so it
+ *    also tests that retrieval finds both.
+ */
 $cases = [
 	[
 		'q' => 'Wie alt ist der Höhlenbär?',
@@ -46,6 +65,16 @@ $cases = [
 	],
 ];
 
+/**
+ * Checks one answer against one case.
+ *
+ * mb_stripos = case-insensitive search that understands UTF-8 (umlauts).
+ * It returns the position or false, so we must compare with "!== false":
+ * position 0 (text at the very start) would otherwise count as "not found".
+ *
+ * Limit: this only checks keywords. It cannot judge whether the whole
+ * answer is good or whether the source numbers [1], [2] are correct.
+ */
 function passes(string $answer, array $case): bool
 {
 	if (isset($case['any'])) {
@@ -71,6 +100,7 @@ function passes(string $answer, array $case): bool
 	throw new InvalidArgumentException('Case must have any or all');
 }
 
+// Measure the total time: speed is part of quality, too.
 $start = microtime(true);
 
 $config = Config::fromEnvironment();
@@ -80,6 +110,8 @@ $passed = 0;
 
 foreach ($cases as $case) {
 	$question = $case['q'];
+	// try/catch per case: if one question fails (e.g. a timeout), it counts
+	// as FAIL and the eval continues with the next question.
 	try {
 		$result = $service->answer($question);
 
